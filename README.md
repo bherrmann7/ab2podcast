@@ -1,6 +1,7 @@
 # ab2podcast
 
-FIXME
+Transforms a directory of AudioBooks into a series of podcasts.    Good for using an podcast player (like CarCast)
+to listen to audiobooks
 
 ## Getting Started
 
