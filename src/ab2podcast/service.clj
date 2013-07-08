@@ -41,48 +41,67 @@
                                                          ]]]
                         )))
 
-(defn make-item [episode]
-  (str "        <item>\n"
-       "             <title>" (get )
+(defn fetch-page [request]
+  (let [file (str (cat/find-start-dir) (java.net.URLDecoder/decode (:path (:path-params request))))]
+    (if (.exists (new java.io.File file))
+      {
+        :status 200
+        :headers {"Content-Type" "application/mp3"}
+        :body (java.io.FileInputStream. file)
+        }
 
-  <title>411 Item 138 ZedCast with Bruce Murray - Voicemail line 206-666-4357 </title>
-  <link>http://podcast411.com/forums/viewtopic.php?t=451</link>
-  <guid>http://media.libsyn.com/media/podcast411/411_060325.mp3</guid>
-  <description> Welcome to the show it is March 25th and this is our 138th
-  show.  Today will be an interview with Bruce Murray from the Zedcast
-  podcast. Please visit this podcast at http://www.zedcast.com/ </description>
-  <enclosure url="http://media.libsyn.com/media/podcast411/411_060325.mp3" length="11779397" type="audio/mpeg"/>
- )
+      {:status 200 :headers {"Content-type" "text/plain"} :body (str "Missing: " file)})
+    ))
+
+(defn escape-html
+  "Change special characters into HTML character entities."
+  [text]
+  (.. #^String (.toString text)
+    (replace "&" "&amp;")
+    (replace "<" "&lt;")
+    (replace ">" "&gt;")
+    (replace "\"" "&quot;")))
+
+(defn make-item [episode]
+  (let [path (java.net.URLEncoder/encode (subs (.toString (get episode 1)) (count (cat/find-start-dir))))]
+
+    (str
+      "        <item>
+                   <title>" (escape-html (get episode 0)) "</title>
+             <enclosure url='/fetch/" path "' length='" (.length (get episode 1)) "' type='audio/mpeg'/>
+        </item>
+        "
+      )))
 
 (defn make-items [episodes]
 
-  (clojure.string/join "" (map make-item episodes))
-
-;  (str "<item>"  "block" "</item>" )
+  (clojure.string/join "" (map #(make-item %) episodes))
+  ;  (str "<item>"  "block" "</item>" )
   )
 
 (defn podcast-page [request]
   (let [cat (cat/fetch-catalog)
-        request-name (.replace (:name (:path-params request)) ".xml" "")
-        subscription (first (filter #(= request-name (first %)) cat ))
+        request-name (java.net.URLDecoder/decode (.replace (:name (:path-params request)) ".xml" ""))
+        subscription (first (filter #(= request-name (first %)) cat))
         episodes (get subscription 1)
-    ]
-    (clojure.pprint/pprint ["============================== subscription" (get (first subscription) 1) ] )
+        ]
+    (clojure.pprint/pprint ["============================== subscription" request-name (get (first subscription) 1)])
 
-   {:status 200 :headers {"Content-type" "application/xml"} :body (str
-   "<?xml version='1.0' encoding='UTF-8'?>
-<rss>
-  <channel>
-    <title>" request-name "</title>
+    {:status 200 :headers {"Content-type" "application/xml"} :body (str
+                                                                     "<?xml version='1.0' encoding='UTF-8'?>
+                                                                  <rss>
+                                                                    <channel>
+                                                                      <title>" request-name "</title>
 " (make-items episodes)
-"  </channel>
-</rss>") } ))
+                                                                     "  </channel>
+                                                                     </rss>")}))
 
 (defroutes routes
   [[["/" {:get home-page}
      ;; Set default interceptors for /about and any other paths under /
      ^:interceptors [(body-params/body-params) bootstrap/html-body]
      ["/podcast/:name" {:get podcast-page}]
+     ["/fetch/:path" {:get fetch-page}]
      ["/about" {:get about-page}]]]])
 
 ;; You can use this fn or a per-request fn via io.pedestal.service.http.route/url-for
