@@ -43,6 +43,7 @@
 
 (defn fetch-page [request]
   (let [file (str (cat/find-start-dir) (java.net.URLDecoder/decode (:path (:path-params request))))]
+    (println (str "Fetching:" file))
     (if (.exists (new java.io.File file))
       {
         :status 200
@@ -62,20 +63,21 @@
     (replace ">" "&gt;")
     (replace "\"" "&quot;")))
 
-(defn make-item [episode]
-  (let [path (java.net.URLEncoder/encode (subs (.toString (get episode 1)) (count (cat/find-start-dir))))]
+(defn make-item [episode host]
+  (let [path (java.net.URLEncoder/encode (subs (.toString (get episode 1)) (count (cat/find-start-dir))))
+       full-path (str "http://" host "/fetch/" path)]
 
     (str
       "        <item>
                    <title>" (escape-html (get episode 0)) "</title>
-             <enclosure url='/fetch/" path "' length='" (.length (get episode 1)) "' type='audio/mpeg'/>
+             <enclosure url='" full-path "' length='" (.length (get episode 1)) "' type='audio/mpeg'/>
         </item>
         "
       )))
 
-(defn make-items [episodes]
+(defn make-items [episodes host]
 
-  (clojure.string/join "" (map #(make-item %) episodes))
+  (clojure.string/join "" (map #(make-item % host) episodes))
   ;  (str "<item>"  "block" "</item>" )
   )
 
@@ -84,15 +86,18 @@
         request-name (java.net.URLDecoder/decode (.replace (:name (:path-params request)) ".xml" ""))
         subscription (first (filter #(= request-name (first %)) cat))
         episodes (get subscription 1)
+        host (get (:headers request) "host")
         ]
     (clojure.pprint/pprint ["============================== subscription" request-name (get (first subscription) 1)])
 
     {:status 200 :headers {"Content-type" "application/xml"} :body (str
-                                                                     "<?xml version='1.0' encoding='UTF-8'?>
-                                                                  <rss>
+"<?xml version='1.0' encoding='UTF-8'?>
+<rss version='2.0'>
                                                                     <channel>
+                                                                     <description>Audiobook 2 Podcast: " request-name "</description>
+                                                                     <link>https://github.com/bherrmann7/ab2podcast</link>
                                                                       <title>" request-name "</title>
-" (make-items episodes)
+" (make-items episodes host)
                                                                      "  </channel>
                                                                      </rss>")}))
 
