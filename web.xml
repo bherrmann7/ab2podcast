@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0"
+         metadata-complete="true">
+      <description>Pedestal HTTP Servlet</description>
+      <display-name>Pedestal HTTP Servlet</display-name>
+      <servlet>
+        <servlet-name>PedestalServlet</servlet-name>
+        <servlet-class>io.pedestal.servlet.ClojureVarServlet</servlet-class>
+        <init-param>
+          <param-name>init</param-name>
+          <param-value>ab2podcast.server/servlet-init</param-value>
+        </init-param>
+        <init-param>
+          <param-name>service</param-name>
+          <param-value>ab2podcast.server/servlet-service</param-value>
+        </init-param>
+        <init-param>
+          <param-name>destroy</param-name>
+          <param-value>ab2podcast.server/servlet-destroy</param-value>
+        </init-param>
+      </servlet>
+      <servlet-mapping>
+        <servlet-name>PedestalServlet</servlet-name>
+        <url-pattern>/*</url-pattern>
+      </servlet-mapping>
+    </web-app>

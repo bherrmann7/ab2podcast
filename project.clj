@@ -8,7 +8,7 @@
 
                  ;; Remove this line and uncomment the next line to
                  ;; use Tomcat instead of Jetty:
-                 [io.pedestal/pedestal.jetty "0.1.9"]
+                 ;;;;[io.pedestal/pedestal.jetty "0.1.9"]
                  ;; [io.pedestal/pedestal.tomcat "0.1.9"]
 
                  ;; auto-reload changes

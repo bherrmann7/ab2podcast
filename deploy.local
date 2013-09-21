@@ -1,0 +1,13 @@
+
+# turn off jetty
+sed -ie 's|\[io.pedestal/pedestal.jetty|;&|g' project.clj 
+lein clean
+lein pom
+mvn dependency:copy-dependencies -DoutputDirectory=target/war/WEB-INF/lib
+set -e 
+mkdir -p target/war/WEB-INF/classes
+cp -R src/* config/* target/war/WEB-INF/classes
+cp web.xml target/war/WEB-INF
+cp -r resources/public/* target/war/
+jar cvf target/ab2podcast.war -C target/war WEB-INF -C target/war bootstrap
+cp target/ab2podcast.war /opt/tomcat/latest/webapps/
