@@ -11,12 +11,16 @@
   [request]
   (ring-resp/response (format "Clojure %s" (clojure-version))))
 
-(defn podcast-row [podcast]
+(defn mk-link [request & more]
+  (clojure.string/join "" (cons (:context-path request) more))
+  )
+
+(defn podcast-row [request podcast]
   (let [name (first podcast)
         episodes (last podcast)]
     [:tr [:td name]
      [:td (count episodes)]
-     [:td [:a {:href (str "/podcast/" (java.net.URLEncoder/encode name) ".xml")} name ".xml"]
+     [:td [:a {:href (mk-link request "/podcast/" (java.net.URLEncoder/encode name) ".xml")} name ".xml"]
       ]]
     ))
 
@@ -24,19 +28,19 @@
   [request]
   (ring-resp/response (page/html5
                         [:head [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0"}]
-                         [:link {:href "/bootstrap/css/bootstrap.min.css" :rel "stylesheet" :media "screen"}]
+                         [:link {:href "http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" :rel "stylesheet" :media "screen"}]
                          ]
                         [:body [:div {:class "content"} [:div {:class "span6"}
                                                          [:h2 "AudioBook to Podcast Server"]
                                                          [:script {:src "http://code.jquery.com/jquery.js"}]
-                                                         [:script {:src "/bootstrap/js/bootstrap.min.js"}]
+                                                         [:script {:src "http://netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/js/bootstrap.min.js"}]
 
                                                          [:table {:class "table"}
                                                           [:tr [:th "Audio Book"]
                                                            [:th "Episode Count"]
                                                            [:th "Podcast URL"]
                                                            ]
-                                                          (map #(podcast-row %) (cat/fetch-catalog))
+                                                          (map #(podcast-row request %) (cat/fetch-catalog))
                                                           ]
                                                          ]]]
                         )))
@@ -63,9 +67,30 @@
     (replace ">" "&gt;")
     (replace "\"" "&quot;")))
 
-(defn make-item [episode host]
-  (let [path (java.net.URLEncoder/encode (subs (.toString (get episode 1)) (count (cat/find-start-dir))))
-       full-path (str "http://" host "/fetch/" path)]
+
+(defn file-parts [path]
+  (let [
+         file-part (first path)
+         path-parts (rest path)
+         parent-file (.getParentFile file-part)
+         ]
+    (if parent-file
+      (file-parts (concat (list parent-file file-part) path-parts))
+      (concat (list file-part) path-parts))))
+
+(defn encode-name [file]
+  (java.net.URLEncoder/encode (.getName file))
+  )
+
+(defn encode-path [file]
+  (let [en-path (clojure.string/join "/" (map #(encode-name %) (file-parts (list (new java.io.File file)))))]
+    ;(println (str "Encoded path is " en-path))
+    en-path
+    ))
+
+(defn make-item [request episode host]
+  (let [path (encode-path (subs (.toString (get episode 1)) (count (cat/find-start-dir))))
+        full-path (str "http://" host (:context-path request) "/fetch/" path )]
 
     (str
       "        <item>
@@ -75,9 +100,9 @@
         "
       )))
 
-(defn make-items [episodes host]
+(defn make-items [request episodes host]
 
-  (clojure.string/join "" (map #(make-item % host) episodes))
+  (clojure.string/join "" (map #(make-item request % host) episodes))
   ;  (str "<item>"  "block" "</item>" )
   )
 
@@ -91,13 +116,13 @@
     (clojure.pprint/pprint ["============================== subscription" request-name (get (first subscription) 1)])
 
     {:status 200 :headers {"Content-type" "application/xml"} :body (str
-"<?xml version='1.0' encoding='UTF-8'?>
-<rss version='2.0'>
-                                                                    <channel>
-                                                                     <description>Audiobook 2 Podcast: " request-name "</description>
+                                                                     "<?xml version='1.0' encoding='UTF-8'?>
+                                                                     <rss version='2.0'>
+                                                                                                                                         <channel>
+                                                                                                                                          <description>Audiobook 2 Podcast: " request-name "</description>
                                                                      <link>https://github.com/bherrmann7/ab2podcast</link>
                                                                       <title>" request-name "</title>
-" (make-items episodes host)
+" (make-items request episodes host)
                                                                      "  </channel>
                                                                      </rss>")}))
 
@@ -106,7 +131,7 @@
      ;; Set default interceptors for /about and any other paths under /
      ^:interceptors [(body-params/body-params) bootstrap/html-body]
      ["/podcast/:name" {:get podcast-page}]
-     ["/fetch/:path" {:get fetch-page}]
+     ["/fetch/*path" {:get fetch-page}]
      ["/about" {:get about-page}]]]])
 
 ;; You can use this fn or a per-request fn via io.pedestal.service.http.route/url-for
