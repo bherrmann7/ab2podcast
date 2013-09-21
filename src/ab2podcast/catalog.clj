@@ -29,7 +29,7 @@
         list (.listFiles directory)
         podcasts (keep #(if (.isDirectory %) %) (sort list))
         pcasts (map #(make-podcast-directory % start-dir) podcasts)]
-    (println (str ":::::::::::::::::::::; fetch-catalog called.  start-dir:" start-dir) )
+    (println (str ":::::::::::::::::::::; fetch-catalog called.  start-dir:" start-dir))
     ;    (clojure.pprint/pprint pcasts)
     ;    (println (count pcasts))
     (println (str "Name:     " (first (first pcasts))))
@@ -38,9 +38,11 @@
     )
   )
 
-(let [catalog (fetch-catalog)]
-  (clojure.pprint/pprint catalog)
-  (doseq [subscription catalog]
-    (println (str "Name:     ") (get subscription 0))
-    (println (str "Episodes: ") (count (get subscription 1)))
-    ))
+(comment
+  (let [catalog (fetch-catalog)]
+    (clojure.pprint/pprint catalog)
+    (doseq [subscription catalog]
+      (println (str "Name:     ") (get subscription 0))
+      (println (str "Episodes: ") (count (get subscription 1)))
+      ))
+  )
