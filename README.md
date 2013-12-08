@@ -11,11 +11,14 @@ to listen to audiobooks
 
 ## Configuration
 
-On Linux the ~/Music directory is expected to have the audio books in Author/Title/*.mp3 format
+### Ubuntu 
+
+On Ubuntu the ~/Music directory is expected to have the audio books in Author/Title/*.mp3 format
 
 For example, I use this shell script (saved as ~/rip.sh)
 
-```#!/bin/bash
+```
+#!/bin/bash
 # A simple shell script to rip audio cd and create mp3 using lame 
 # and cdparanoia utilities.
 # ----------------------------------------------------------------------------
@@ -44,4 +47,7 @@ like so,
 ...
 ```
 
-On OSX the default itunes home directory is used.
+## OSX
+
+On OSX the default itunes home directory is used.  So simply rip from itunes (configured to rip as MP3.)
+
