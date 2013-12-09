@@ -13,7 +13,7 @@ to listen to audiobooks
 
 ### Ubuntu 
 
-On Ubuntu the ~/Music directory is expected to have the audio books in Author/Title/*.mp3 format
+On Ubuntu the ~/ab directory is expected to have the audio books in Author/Title/*.mp3 format
 
 For example, I use this shell script (saved as ~/rip.sh)
 
