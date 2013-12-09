@@ -6,3 +6,5 @@ logs/
 
 ab2podcast.iml
 .lein-repl-history
+deploy-audiobooks.sh
+deploy.jadn
